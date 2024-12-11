@@ -1,6 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'services/google_play_services_checker.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+
+  await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
+
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Check Google Play Services before Firebase initialization
+  final googlePlayChecker = GooglePlayServicesChecker();
+  final hasGooglePlayServices = await googlePlayChecker.checkGooglePlayServices();
+  
+  if (!hasGooglePlayServices) {
+    // Handle the case where Google Play Services is not available
+    print('Google Play Services not available');
+    // You might want to show a dialog or handle this case appropriately
+  }
+  
+  
+  
+  String? fcmToken = await FirebaseMessaging.instance.getToken();
+  
+  FirebaseMessaging.instance.onTokenRefresh.listen((String newToken) {
+    print('Token refreshed: $newToken');
+  });
+
   runApp(const MyApp());
 }
 
@@ -54,8 +83,57 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _counter = 0;
+  final GooglePlayServicesChecker _googlePlayChecker = GooglePlayServicesChecker();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkGooglePlayServices();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _checkGooglePlayServices();
+    }
+  }
+
+  Future<void> _checkGooglePlayServices() async {
+    final hasGooglePlayServices = await _googlePlayChecker.checkGooglePlayServices();
+    if (!hasGooglePlayServices) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Google Play Services Required'),
+              content: const Text('This app requires Google Play Services. Please install or update it from the Play Store.'),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    await _googlePlayChecker.checkGooglePlayServices();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
+  }
 
   void _incrementCounter() {
     setState(() {
