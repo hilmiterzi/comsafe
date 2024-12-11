@@ -1,8 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:your_project/screens/incoming_call_screen.dart';
+import 'package:comsafe/screens/incoming_call_screen.dart';
+import 'navigation_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -69,18 +69,17 @@ class NotificationService {
   }
 
   void _onNotificationTapped(NotificationResponse response) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => IncomingCallScreen(
-          callerName: 'Incoming Call',
-          onAccept: () {
-            Navigator.pop(context);
-          },
-          onDecline: () {
-            Navigator.pop(context);
-          },
-        ),
+    NavigationService.navigateTo(
+      IncomingCallScreen(
+        callerName: 'Incoming Call',
+        onAccept: () {
+          // Handle call accept
+          NavigationService.navigatorKey.currentState?.pop();
+        },
+        onDecline: () {
+          // Handle call decline
+          NavigationService.navigatorKey.currentState?.pop();
+        },
       ),
     );
   }

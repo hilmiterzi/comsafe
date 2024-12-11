@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'services/notification_service.dart';
 import 'firebase_options.dart';
 import 'screens/test_notification_screen.dart';
+import 'services/navigation_service.dart';
 
 
 @pragma('vm:entry-point')
@@ -51,6 +52,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: NavigationService.navigatorKey,
       title: 'FCM Call Notifications',
       theme: ThemeData(
         primarySwatch: Colors.blue,
