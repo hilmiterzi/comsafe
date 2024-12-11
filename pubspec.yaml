@@ -41,6 +41,7 @@ dependencies:
   http: ^1.2.2
   agora_rtc_engine: ^6.2.6
   permission_handler: ^11.3.0
+  firebase_database: ^11.2.0
 
 dev_dependencies:
   flutter_test:
