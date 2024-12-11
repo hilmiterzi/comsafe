@@ -1,5 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'package:your_project/screens/incoming_call_screen.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -54,6 +57,9 @@ class NotificationService {
       enableVibration: true,
       playSound: true,
       sound: RawResourceAndroidNotificationSound('incoming_call'),
+      enableLights: true,
+      showBadge: true,
+      audioAttributesUsage: AudioAttributesUsage.voiceCommunication,
     );
 
     await _localNotifications
@@ -63,7 +69,20 @@ class NotificationService {
   }
 
   void _onNotificationTapped(NotificationResponse response) {
-    print('Notification tapped: ${response.payload}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => IncomingCallScreen(
+          callerName: 'Incoming Call',
+          onAccept: () {
+            Navigator.pop(context);
+          },
+          onDecline: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
   }
 
   Future<String?> getDeviceToken() async {
@@ -74,36 +93,33 @@ class NotificationService {
     required String callerName,
     required String callerId,
   }) async {
+    final androidNotificationDetails = AndroidNotificationDetails(
+      'calls_channel',
+      'Incoming Calls',
+      channelDescription: 'Used for incoming call notifications',
+      importance: Importance.max,
+      priority: Priority.max,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.call,
+      sound: const RawResourceAndroidNotificationSound('incoming_call'),
+      playSound: true,
+      ongoing: true,
+      autoCancel: false,
+      visibility: NotificationVisibility.public,
+      ticker: 'Incoming Call',
+      additionalFlags: Int32List.fromList(<int>[
+        4,    // FLAG_INSISTENT
+        32,   // FLAG_HIGH_PRIORITY
+        128,  // FLAG_ONGOING_EVENT
+        1024, // FLAG_NO_CLEAR
+      ]),
+    );
+
     await _localNotifications.show(
       callerId.hashCode,
       'Incoming Call',
       callerName,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'calls_channel',
-          'Incoming Calls',
-          channelDescription: 'Used for incoming call notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          fullScreenIntent: true,
-          sound: const RawResourceAndroidNotificationSound('incoming_call'),
-          playSound: true,
-          ongoing: true,
-          category: AndroidNotificationCategory.call,
-          actions: <AndroidNotificationAction>[
-            const AndroidNotificationAction('answer', 'Answer'),
-            const AndroidNotificationAction('decline', 'Decline'),
-          ],
-        ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-          sound: 'incoming_call.aiff',
-          interruptionLevel: InterruptionLevel.critical,
-        ),
-      ),
-      payload: callerId,
+      NotificationDetails(android: androidNotificationDetails),
     );
   }
 } 
