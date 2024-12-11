@@ -2,7 +2,6 @@ import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../utils/secure_settings.dart';
-import '../services/encryption_service.dart';
 
 class VideoCallScreen extends StatefulWidget {
   final String channelName;
@@ -23,6 +22,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   bool _localUserJoined = false;
   bool _isInitialized = false;
   late RtcEngine _engine;
+  Set<int?> _participants = {};
 
   @override
   void initState() {
@@ -45,13 +45,12 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
       ));
 
-      // Enable encryption
-      final encryptionConfig = EncryptionService.instance.getAgoraEncryptionConfig();
+      // Simple static encryption
       await _engine.enableEncryption(
         enabled: true,
         config: EncryptionConfig(
           encryptionMode: EncryptionMode.aes256Gcm2,
-          encryptionKey: encryptionConfig['encryptionKey']!,
+          encryptionKey: SecureSettings.agoraEncryptionKey,
         ),
       );
 
@@ -69,25 +68,34 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             print('🎉 Local user ${connection.localUid} joined channel ${connection.channelId}');
             setState(() {
               _localUserJoined = true;
+              if (connection.localUid != null) {
+                _participants.add(connection.localUid);
+              }
             });
           },
           onUserJoined: (connection, remoteUid, elapsed) {
             print('👥 Remote user $remoteUid joined channel ${connection.channelId}');
+            
+            if (_participants.length >= 2) {
+              print('⚠️ Third person trying to join! Triggering alarm...');
+              _triggerSecurityAlarm();
+              return;
+            }
+
             setState(() {
               _remoteUid = remoteUid;
+              _participants.add(remoteUid);
             });
           },
           onUserOffline: (connection, remoteUid, reason) {
             print('👋 Remote user $remoteUid left channel ${connection.channelId}');
             setState(() {
               _remoteUid = null;
+              _participants.remove(remoteUid);
             });
           },
           onError: (err, msg) {
             print('❌ Error $err: $msg');
-          },
-          onConnectionStateChanged: (connection, state, reason) {
-            print('🔌 Connection state changed: $state, reason: $reason');
           },
         ),
       );
@@ -112,11 +120,38 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     } catch (e, stackTrace) {
       print('❌ Error initializing Agora: $e');
       print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to initialize video call: $e')),
+        );
+        Navigator.pop(context);
+      }
     }
+  }
+
+  void _triggerSecurityAlarm() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('⚠️ Security Alert!'),
+        content: const Text('Unauthorized third person attempting to join the call!'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+            child: const Text('End Call'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
+    _participants.clear();
     print('🧹 Disposing VideoCallScreen');
     _disposeAgora();
     super.dispose();

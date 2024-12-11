@@ -9,6 +9,9 @@ class SecureSettings {
     0x32, 0x66, 0x36, 0x31, 0x61, 0x62, 0x30, 0x36
   ];
 
+  // Add static encryption key for Agora
+  static const String agoraEncryptionKey = "YourStaticEncryptionKeyHere"; // 32 bytes for AES-256
+
   static String get agoraAppId {
     return utf8.decode(_key);
   }
