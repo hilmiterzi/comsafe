@@ -3,8 +3,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'services/notification_service.dart';
 import 'firebase_options.dart';
-import 'screens/test_notification_screen.dart';
+import 'screens/home_screen.dart';
 import 'services/navigation_service.dart';
+import 'screens/incoming_call_screen.dart';
+import 'screens/video_call_screen.dart';
 
 
 @pragma('vm:entry-point')
@@ -12,10 +14,18 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.instance.initialize();
   
-  if (message.data['type'] == 'call') {
-    await NotificationService.instance.showCallNotification(
-      callerName: message.data['caller_name'] ?? 'Unknown',
-      callerId: message.data['caller_id'] ?? '',
+  if (message.data['type'] == 'group_call') {
+    NavigationService.navigateTo(
+      IncomingCallScreen(
+        callerName: 'Group Call',
+        onAccept: () {
+          final callId = message.data['callId'];
+          NavigationService.navigateTo(
+            VideoCallScreen(channelName: callId),
+          );
+        },
+        onDecline: () => NavigationService.navigatorKey.currentState?.pop(),
+      ),
     );
   }
 }
@@ -32,10 +42,18 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    if (message.data['type'] == 'call') {
-      NotificationService.instance.showCallNotification(
-        callerName: message.data['caller_name'] ?? 'Unknown',
-        callerId: message.data['caller_id'] ?? '',
+    if (message.data['type'] == 'group_call') {
+      NavigationService.navigateTo(
+        IncomingCallScreen(
+          callerName: 'Group Call',
+          onAccept: () {
+            final callId = message.data['callId'];
+            NavigationService.navigateTo(
+              VideoCallScreen(channelName: callId),
+            );
+          },
+          onDecline: () => NavigationService.navigatorKey.currentState?.pop(),
+        ),
       );
     }
   });
@@ -53,12 +71,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: NavigationService.navigatorKey,
-      title: 'FCM Call Notifications',
+      title: 'Video Call App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      home: const TestNotificationScreen(),
+      home: const HomeScreen(),
     );
   }
 }
+

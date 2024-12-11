@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:typed_data';
 import 'package:comsafe/screens/incoming_call_screen.dart';
 import 'navigation_service.dart';
+import 'package:flutter/material.dart';
+import 'package:comsafe/screens/video_call_screen.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -120,5 +122,24 @@ class NotificationService {
       callerName,
       NotificationDetails(android: androidNotificationDetails),
     );
+  }
+
+  void _handleNotification(RemoteMessage message) {
+    if (message.data['type'] == 'group_call') {
+      // Show incoming call screen
+      NavigationService.navigateTo(
+        IncomingCallScreen(
+          callerName: 'Group Call',
+          onAccept: () {
+            final callId = message.data['callId'];
+            NavigationService.navigateTo(
+              VideoCallScreen(channelName: callId),
+            );
+          },
+          onDecline: () => NavigationService.navigatorKey.currentState?.pop(),
+        ),
+      );
+    }
+    // ... your existing notification handling ...
   }
 } 

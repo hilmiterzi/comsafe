@@ -1,2 +1,2 @@
-const appId = "YOUR_AGORA_APP_ID";
-const token = "YOUR_TEMP_TOKEN"; // Get this from Agora Console 
+const appId = "8a80728309884b6dbe7308272f61ab06";
+const token = "007eJxTYCiacI6Z22PPioPfw5f4XJ5Yf+v2J8vpj1coKMckGrVPT1uiwGCRaGFgbmRhbGBpYWGSZJaSlGpubGBhZG6UZmaYmGRglnAvMr0hkJEhO3wTKyMDBIL4LAwlqcUlDAwAi8Af9A=="; // Get this from Agora Console 

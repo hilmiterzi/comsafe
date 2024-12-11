@@ -15,7 +15,7 @@ class IncomingCallScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false, // Prevents back button
+      onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: Colors.red,
         body: SafeArea(
@@ -40,11 +40,13 @@ class IncomingCallScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   FloatingActionButton(
+                    heroTag: 'decline_button',
                     onPressed: onDecline,
                     backgroundColor: Colors.red,
                     child: const Icon(Icons.call_end),
                   ),
                   FloatingActionButton(
+                    heroTag: 'accept_button',
                     onPressed: onAccept,
                     backgroundColor: Colors.green,
                     child: const Icon(Icons.call),

@@ -1,4 +1,12 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../services/calls_service.dart';
+import '../screens/video_call_screen.dart';
+import '../screens/incoming_call_screen.dart';
+
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -15,15 +23,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _listenForCalls() {
     _callSubscription = _callsService.listenForCalls().listen((callData) {
+      if (!mounted) return;
       if (callData.isNotEmpty && callData['status'] == 'active') {
-        // Show incoming call screen
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => IncomingCallScreen(
               callerName: 'Group Call',
               onAccept: () => _joinCall(callData['callId']),
-              onDecline: () => Navigator.pop(context),
+              onDecline: () {
+                Navigator.pop(context);
+                _callsService.declineCall(callData['callId']);
+              },
             ),
           ),
         );
@@ -36,13 +47,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _joinCall(String callId) async {
+    if (!mounted) return;
     await _callsService.joinCall(callId);
-    Navigator.pushReplacement(
+    if (!mounted) return;
+    
+    await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => VideoCallScreen(
-          channelName: callId,
-        ),
+        builder: (context) => VideoCallScreen(channelName: callId),
       ),
     );
   }

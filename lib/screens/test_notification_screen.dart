@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
+import '../services/calls_service.dart';
 
 class TestNotificationScreen extends StatelessWidget {
   const TestNotificationScreen({super.key});
@@ -20,6 +21,14 @@ class TestNotificationScreen extends StatelessWidget {
                 );
               },
               child: const Text('Test Call Notification'),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                final callsService = CallsService();
+                await callsService.startGroupCall();
+              },
+              child: const Text('Start Video Call'),
             ),
             const SizedBox(height: 20),
             FutureBuilder<String?>(
