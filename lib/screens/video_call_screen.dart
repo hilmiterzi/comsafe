@@ -1,7 +1,8 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../utils/settings.dart';
+import '../utils/secure_settings.dart';
+import '../services/encryption_service.dart';
 
 class VideoCallScreen extends StatefulWidget {
   final String channelName;
@@ -39,12 +40,23 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       _engine = createAgoraRtcEngine();
       
       print('🔧 Initializing RtcEngine');
-      await _engine.initialize(const RtcEngineContext(
-        appId: appId,
+      await _engine.initialize(RtcEngineContext(
+        appId: SecureSettings.agoraAppId,
         channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
       ));
 
-      print('📹 Enabling video');
+      // Enable encryption
+      final encryptionConfig = EncryptionService.instance.getAgoraEncryptionConfig();
+      await _engine.enableEncryption(
+        enabled: true,
+        config: EncryptionConfig(
+          encryptionMode: EncryptionMode.aes256Gcm2,
+          encryptionKey: encryptionConfig['encryptionKey']!,
+        ),
+      );
+
+      print('🔐 Encryption enabled');
+
       await _engine.enableVideo();
       await _engine.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
       
@@ -82,9 +94,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
       print('🔑 Joining channel: ${widget.channelName}');
       await _engine.joinChannel(
-        token: token, // Make sure this is your valid token
+        token: SecureSettings.generateToken(widget.channelName),
         channelId: widget.channelName,
-        uid: 0,
+        uid: widget.isInitiator ? 1 : 0,
         options: const ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
           channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
