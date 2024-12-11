@@ -1,2 +1,2 @@
 const appId = "8a80728309884b6dbe7308272f61ab06";
-const token = "007eJxTYCiacI6Z22PPioPfw5f4XJ5Yf+v2J8vpj1coKMckGrVPT1uiwGCRaGFgbmRhbGBpYWGSZJaSlGpubGBhZG6UZmaYmGRglnAvMr0hkJEhO3wTKyMDBIL4LAwlqcUlDAwAi8Af9A=="; // Get this from Agora Console 
+const token = "007eJxTYCjk7quVnpI5cdp1BoPnt/Jtz6TafVp4e3o7g8PE49N+X/ZWYLBItDAwN7IwNrC0sDBJMktJSjU3NrAwMjdKMzNMTDIwy34Rmd4QyMhQyy3MwsgAgSC+IENyfm5xYlpqfHJGYl5eak68IQMDAAkqI9Y="; // Get this from Agora Console 

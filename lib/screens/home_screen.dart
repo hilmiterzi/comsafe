@@ -18,49 +18,102 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    print('🏠 HomeScreen initialized');
     _listenForCalls();
   }
 
   void _listenForCalls() {
-    _callSubscription = _callsService.listenForCalls().listen((callData) {
-      if (!mounted) return;
-      if (callData.isNotEmpty && callData['status'] == 'active') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => IncomingCallScreen(
-              callerName: 'Group Call',
-              onAccept: () => _joinCall(callData['callId']),
-              onDecline: () {
-                Navigator.pop(context);
-                _callsService.declineCall(callData['callId']);
-              },
-            ),
-          ),
-        );
-      }
-    });
+    print('👂 Starting to listen for calls in HomeScreen');
+    _callSubscription = _callsService.listenForCalls().listen(
+      (callData) {
+        print('📞 Received call data in HomeScreen: $callData');
+        if (callData.isNotEmpty) {
+          print('📱 Found active call, showing incoming screen');
+          final String callId = callData.entries.first.key;
+          
+          if (mounted) {
+            print('🔔 Showing incoming call screen for call: $callId');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => IncomingCallScreen(
+                  callerName: 'Group Call',
+                  onAccept: () async {
+                    print('✅ Call accepted: $callId');
+                    await _joinCall(callId);
+                  },
+                  onDecline: () async {
+                    print('❌ Call declined: $callId');
+                    await _callsService.declineCall(callId);
+                    if (mounted) Navigator.pop(context);
+                  },
+                ),
+              ),
+            );
+          }
+        }
+      },
+      onError: (error) {
+        print('❌ Error in call listener: $error');
+      },
+    );
   }
 
   Future<void> _startCall() async {
-    await _callsService.startGroupCall();
+    print('📞 Starting new call');
+    try {
+      await _callsService.startGroupCall();
+      
+      if (!mounted) return;
+      print('🎥 Navigating initiator to video call screen');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VideoCallScreen(
+            channelName: CallsService.CHANNEL_NAME,
+            isInitiator: true,
+          ),
+        ),
+      );
+    } catch (e) {
+      print('❌ Error starting call: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start call: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _joinCall(String callId) async {
-    if (!mounted) return;
-    await _callsService.joinCall(callId);
-    if (!mounted) return;
-    
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VideoCallScreen(channelName: callId),
-      ),
-    );
+    print('👋 Joining call: $callId');
+    try {
+      await _callsService.joinCall(callId);
+      
+      if (!mounted) return;
+      print('🎥 Navigating joiner to video call screen');
+      await Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VideoCallScreen(
+            channelName: CallsService.CHANNEL_NAME,
+            isInitiator: false,
+          ),
+        ),
+      );
+    } catch (e) {
+      print('❌ Error joining call: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to join call: $e')),
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
+    print('🏠 Disposing HomeScreen');
     _callSubscription?.cancel();
     super.dispose();
   }

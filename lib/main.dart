@@ -8,7 +8,6 @@ import 'services/navigation_service.dart';
 import 'screens/incoming_call_screen.dart';
 import 'screens/video_call_screen.dart';
 
-
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -21,7 +20,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         onAccept: () {
           final callId = message.data['callId'];
           NavigationService.navigateTo(
-            VideoCallScreen(channelName: callId),
+            VideoCallScreen(
+              channelName: callId,
+              isInitiator: false,
+            ),
           );
         },
         onDecline: () => NavigationService.navigatorKey.currentState?.pop(),
@@ -37,7 +39,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await NotificationService.instance.initialize();
+  final notificationService = NotificationService();
+  await notificationService.initialize();
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -49,7 +52,10 @@ void main() async {
           onAccept: () {
             final callId = message.data['callId'];
             NavigationService.navigateTo(
-              VideoCallScreen(channelName: callId),
+              VideoCallScreen(
+                channelName: callId,
+                isInitiator: false,
+              ),
             );
           },
           onDecline: () => NavigationService.navigatorKey.currentState?.pop(),
@@ -57,9 +63,6 @@ void main() async {
       );
     }
   });
-
-  String? fcmToken = await FirebaseMessaging.instance.getToken();
-  print('FCM Token: $fcmToken'); // Save this token for sending notifications
 
   runApp(const MyApp());
 }
@@ -71,10 +74,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: NavigationService.navigatorKey,
-      title: 'Video Call App',
+      title: 'ComSafe',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        useMaterial3: true,
       ),
       home: const HomeScreen(),
     );
